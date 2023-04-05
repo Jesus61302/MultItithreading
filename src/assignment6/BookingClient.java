@@ -24,6 +24,8 @@ public class BookingClient {
     private Map<String, Flight.SeatClass[]> offices;
     private Flight flight;
     private int customerID;
+    private Boolean flightFull;
+    private Boolean soldOutMessagePrinted;
 
     /**
      * @param offices maps ticket office id to seat class preferences of customers in line
@@ -33,6 +35,8 @@ public class BookingClient {
         this.offices = offices;
         this.flight = flight;
         this.customerID = 0;
+        this.flightFull = false;
+        this.soldOutMessagePrinted = false;
     }
 
     /**
@@ -101,13 +105,36 @@ public class BookingClient {
 
         @Override
         public void run() {
+            Flight.Ticket ticket;
             Flight.Seat seat;
-            for(Flight.SeatClass seatType: preferences){
-                seat = flight.getNextAvailableSeat(seatType);
-                customerID++;
-                flight.printTicket(office, seat, customerID);
+            Boolean customersInline = true;
+            while(customersInline && !flightFull){
+                for(Flight.SeatClass seatType: preferences){
+                    seat = flight.getNextAvailableSeat(seatType);
+                    if(seat == null){
+                        flightFull = true;
+                        break;
+                    }
+                    customerID++;
+                    try {
+                        flight.printTicket(office, seat, customerID);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                customersInline = false;
             }
-
+            if(flightFull){
+                soldOut();
+            }
         }
+
+        private synchronized void soldOut(){
+            if (!soldOutMessagePrinted){
+                System.out.println("Sorry, we are sold out");
+                soldOutMessagePrinted = true;
+            }
+        }
+
     }
 }

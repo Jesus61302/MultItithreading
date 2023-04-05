@@ -14,6 +14,7 @@ package assignment6;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class Flight {
     /**
@@ -29,6 +30,7 @@ public class Flight {
 	private int firstSold;
 	private int businessSold;
 	private int economySold;
+	private ArrayBlockingQueue<Ticket> ticketsToBePrinted;
 
 
     public Flight(String flightNo, int firstNumRows, int businessNumRows, int economyNumRows) {
@@ -41,6 +43,8 @@ public class Flight {
 		this.firstSold = 0;
 		this.businessSold = 0;
 		this.economySold = 0;
+		this.ticketsToBePrinted = new ArrayBlockingQueue<>(firstTotal + businessTotal + economyTotal);
+
 
     }
     
@@ -63,27 +67,21 @@ public class Flight {
 
 		switch (seatClass){
 			case FIRST:
-				System.out.println("Tried FIRST");
 				seat = checkFirst();
 				if (seat != null){
-					log.addSeat(seat);
 					return seat;
 				}
 				seatClass = seatClass.BUSINESS;
 
 			case BUSINESS:
-				System.out.println("Tried Buisness");
 				seat = checkBuisness();
 				if (seat != null){
-					log.addSeat(seat);
 					return seat;
 				}
 				seatClass = seatClass.ECONOMY;
 			case ECONOMY:
-				System.out.println("Tried Economy");
 				seat = checkEconomy();
 				if (seat != null){
-					log.addSeat(seat);
 					return seat;
 				}
 				return null;
@@ -224,15 +222,21 @@ public class Flight {
      * @param seat a particular seat in the airplane
      * @return a flight ticket or null if a ticket office failed to reserve the seat
      */
-	public Ticket printTicket(String officeId, Seat seat, int customer) {
+	public Ticket printTicket(String officeId, Seat seat, int customer) throws InterruptedException {
 		if (seat == null){
 			return null;
 		}
         Ticket ticket = new Ticket(flightNo,officeId, seat,customer);
-		log.addTicket(ticket);
-		System.out.println(ticket);
+		ticketsToBePrinted.add(ticket);
+		printTicketHelper(ticket);
 		return ticket;
     }
+
+	private synchronized void printTicketHelper(Ticket ticket) throws InterruptedException {
+		Thread.sleep(printDelay);
+		log.addTicket(ticket);
+		System.out.println(ticket);
+	}
 
 
 	/**
