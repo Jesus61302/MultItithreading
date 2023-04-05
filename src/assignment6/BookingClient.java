@@ -83,11 +83,25 @@ public class BookingClient {
 
         bookingClient.joinAllThreads(bookingClient.simulate());
 
+        System.out.println();
+        System.out.println("This is log");
+
+        System.out.println(flight.getSeatLog());
+        System.out.println();
+        System.out.println(flight.getTransactionLog());
+
     }
     private static void joinAllThreads(List<Thread> threads)
             throws InterruptedException {
         for (Thread t : threads) {
             t.join();
+        }
+    }
+    private synchronized void soldOut() throws InterruptedException {
+        if (!soldOutMessagePrinted){
+            soldOutMessagePrinted = true;
+            Thread.sleep(flight.getPrintDelay());
+            System.out.println("Sorry, we are sold out");
         }
     }
     class Operate implements Runnable{
@@ -125,16 +139,15 @@ public class BookingClient {
                 customersInline = false;
             }
             if(flightFull){
-                soldOut();
+                try {
+                    soldOut();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
-        private synchronized void soldOut(){
-            if (!soldOutMessagePrinted){
-                System.out.println("Sorry, we are sold out");
-                soldOutMessagePrinted = true;
-            }
-        }
+
 
     }
 }
