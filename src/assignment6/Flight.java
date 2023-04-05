@@ -1,11 +1,10 @@
 /* MULTITHREADING <Flight.java>
  * EE422C Project 6 submission by
- * Replace <...> with your actual data.
- * <Student Name>
- * <Student EID>
- * <Student 5-digit Unique No.>
- * Slip days used: <0>
- * Fall 2021
+ * Jesus Hernandez
+ * jh69848
+ * 17155
+ * Slip days used: 1
+ * April 2023
  */
 
 /*
@@ -22,11 +21,27 @@ public class Flight {
      */
     private int printDelay; // 50 ms. Use it to fix the delay time between prints.
     private SalesLogs log;
+	private String flightNo;
+
+	private int firstTotal;
+	private int businessTotal;
+	private int economyTotal;
+	private int firstSold;
+	private int businessSold;
+	private int economySold;
+
 
     public Flight(String flightNo, int firstNumRows, int businessNumRows, int economyNumRows) {
-    	this.printDelay = 50;// 50 ms. Use it to fix the delay time between
-    	this.log = new SalesLogs();
-        // TODO: Implement the rest of this constructor
+		this.printDelay = 50;// 50 ms. Use it to fix the delay time between
+		this.log = new SalesLogs();
+		this.firstTotal = firstNumRows * 4;
+		this.businessTotal = businessNumRows * 6;
+		this.economyTotal = economyNumRows * 6;
+		this.flightNo = flightNo;
+		this.firstSold = 0;
+		this.businessSold = 0;
+		this.economySold = 0;
+
     }
     
     public void setPrintDelay(int printDelay) {
@@ -44,9 +59,164 @@ public class Flight {
      * @return the next available seat or null if flight is full
      */
 	public Seat getNextAvailableSeat(SeatClass seatClass) {
-		// TODO: Implement this method
-        return null;
+		Seat seat;
+
+		switch (seatClass){
+			case FIRST:
+				System.out.println("Tried FIRST");
+				seat = checkFirst();
+				if (seat != null){
+					log.addSeat(seat);
+					return seat;
+				}
+				seatClass = seatClass.BUSINESS;
+
+			case BUSINESS:
+				System.out.println("Tried Buisness");
+				seat = checkBuisness();
+				if (seat != null){
+					log.addSeat(seat);
+					return seat;
+				}
+				seatClass = seatClass.ECONOMY;
+			case ECONOMY:
+				System.out.println("Tried Economy");
+				seat = checkEconomy();
+				if (seat != null){
+					log.addSeat(seat);
+					return seat;
+				}
+				return null;
+
+		}
+		return null;
 	}
+	//checks if there is an available seat in First class and returns next available seat
+	//getNextAvailableSeat Helper
+	private Seat checkFirst(){
+		if(firstSold >= firstTotal){
+			return null;
+		}
+		Seat temp = getSeat(SeatClass.FIRST, firstSold);
+		firstSold++;
+
+		return temp;
+	}
+	//checks if there is an available seat in Business class and returns next available seat
+	//getNextAvailableSeat Helper
+	private Seat checkBuisness(){
+		if(businessSold >= businessTotal){
+			return null;
+		}
+		Seat temp = getSeat(SeatClass.BUSINESS, businessSold);
+		businessSold++;
+
+		return temp;
+	}
+	//checks if there is an available seat in Economy class and returns next available seat
+	//getNextAvailableSeat Helper
+	private Seat checkEconomy(){
+		if(economySold >= economyTotal){
+			return null;
+		}
+		Seat temp = getSeat(SeatClass.ECONOMY, economySold);
+		economySold++;
+
+		return temp;
+	}
+	//returns correct seat based on position and Class
+	//getNextAvailableSeat Helper
+	private synchronized Seat getSeat(SeatClass seatClass, int position) {
+		int row = 0;
+		int column = 0;
+		SeatLetter letter = null;
+
+		switch (seatClass){
+			case FIRST:
+				row = (position /4) + 1;
+				column = (position % 4);
+				switch (column){
+					case 0:
+						letter = SeatLetter.A;
+						break;
+					case 1:
+						letter = SeatLetter.B;
+						break;
+					case 2:
+						letter = SeatLetter.E;
+						break;
+					case 3:
+						letter = SeatLetter.F;
+						break;
+				}
+				break;
+			case BUSINESS:
+				row = (position /6) + 1 + firstTotal/4;
+				column = (position % 6);
+				switch (column){
+					case 0:
+						letter = SeatLetter.A;
+						break;
+					case 1:
+						letter = SeatLetter.B;
+						break;
+					case 2:
+						letter = SeatLetter.C;
+						break;
+					case 3:
+						letter = SeatLetter.D;
+						break;
+					case 4:
+						letter = SeatLetter.E;
+						break;
+					case 5:
+						letter = SeatLetter.F;
+						break;
+
+				}
+				break;
+			case ECONOMY:
+				row = (position /6) + firstTotal/4 + businessTotal/6  + 1;
+				column = (position % 6);
+				switch (column){
+					case 0:
+						letter = SeatLetter.A;
+						break;
+					case 1:
+						letter = SeatLetter.B;
+						break;
+					case 2:
+						letter = SeatLetter.C;
+						break;
+					case 3:
+						letter = SeatLetter.D;
+						break;
+					case 4:
+						letter = SeatLetter.E;
+						break;
+					case 5:
+						letter = SeatLetter.F;
+						break;
+
+				}
+				break;
+
+
+		}
+		Seat seat = new Seat(seatClass, row, letter);
+		log.addSeat(seat);
+		return seat;
+	}
+//	public void testGetNextAvailableSeat(){
+//		System.out.println(getNextAvailableSeat(SeatClass.FIRST));
+//		System.out.println(getNextAvailableSeat(SeatClass.BUSINESS));
+//		System.out.println(getNextAvailableSeat(SeatClass.ECONOMY));
+//
+//
+//
+//	}
+
+
 
 	/**
      * Prints a ticket to the console for the customer after they reserve a seat.
@@ -55,9 +225,15 @@ public class Flight {
      * @return a flight ticket or null if a ticket office failed to reserve the seat
      */
 	public Ticket printTicket(String officeId, Seat seat, int customer) {
-        // TODO: Implement this method
-        return null;
+		if (seat == null){
+			return null;
+		}
+        Ticket ticket = new Ticket(flightNo,officeId, seat,customer);
+		log.addTicket(ticket);
+		System.out.println(ticket);
+		return ticket;
     }
+
 
 	/**
      * Lists all seats sold for this flight in the order of allocation
@@ -65,8 +241,7 @@ public class Flight {
      * @return list of seats sold
      */
     public List<Seat> getSeatLog() {
-        // TODO: Implement this method
-        return null;
+        return log.getSeatLog();
     }
 
     /**
@@ -75,8 +250,7 @@ public class Flight {
      * @return list of tickets sold
      */
     public List<Ticket> getTransactionLog() {
-        // TODO: Implement this method
-        return null;
+        return log.getTicketLog();
     }
     
     static enum SeatClass {
@@ -156,8 +330,8 @@ public class Flight {
 	}
 
 	/**
- 	 * Represents a flight ticket purchased by a customer
- 	 */
+	 * Represents a flight ticket purchased by a customer
+	 */
 	static class Ticket {
 		private String flightNo;
 		private String officeId;
@@ -187,7 +361,7 @@ public class Flight {
 		public void setOfficeId(String officeId) {
 			this.officeId = officeId;
 		}
-		
+
 		@Override
 		public String toString() {
 			String result, dashLine, flightLine, officeLine, seatLine, customerLine, eol;

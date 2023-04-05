@@ -1,11 +1,10 @@
-/* MULTITHREADING <BookingClient.java>
+/* MULTITHREADING <Flight.java>
  * EE422C Project 6 submission by
- * Replace <...> with your actual data.
- * <Student Name>
- * <Student EID>
- * <Student 5-digit Unique No.>
- * Slip days used: <0>
- * Fall 2021
+ * Jesus Hernandez
+ * jh69848
+ * 17155
+ * Slip days used: 1
+ * April 2023
  */
 
 /*
@@ -13,18 +12,27 @@
 */
 package assignment6;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.lang.Thread;
 
 public class BookingClient {
 
-	/**
+
+    private Map<String, Flight.SeatClass[]> offices;
+    private Flight flight;
+    private int customerID;
+
+    /**
      * @param offices maps ticket office id to seat class preferences of customers in line
      * @param flight the flight for which tickets are sold for
      */
-    public BookingClient(Map<String, SeatClass[]> offices, Flight flight) {
-        // TODO: Implement this constructor
+    public BookingClient(Map<String, Flight.SeatClass[]> offices, Flight flight) {
+        this.offices = offices;
+        this.flight = flight;
+        this.customerID = 0;
     }
 
     /**
@@ -35,11 +43,71 @@ public class BookingClient {
      * should have as many threads as there are ticket offices
      */
     public List<Thread> simulate() {
-        // TODO: Implement this method
-        return null;
+        Thread[] threads = new Thread[offices.size()];
+        int i = 0;
+        for (Map.Entry<String,Flight.SeatClass[]> entry:
+             offices.entrySet()) {
+            threads[i] = new Thread(new Operate(entry.getKey(), entry.getValue()));
+            threads[i].start();
+            i++;
+        }
+        return Arrays.asList(threads);
     }
+    public static void main(String[] args) throws InterruptedException {
+        final Flight.SeatClass[] seatPreferences1 = new Flight.SeatClass[]{Flight.SeatClass.BUSINESS,
+                Flight.SeatClass.BUSINESS, Flight.SeatClass.BUSINESS};
+        final Flight.SeatClass[] seatPreferences2 = new Flight.SeatClass[]{Flight.SeatClass.FIRST, 
+                Flight.SeatClass.BUSINESS, Flight.SeatClass.ECONOMY, Flight.SeatClass.ECONOMY};
+        final Flight.SeatClass[] seatPreferences3 = new Flight.SeatClass[]{Flight.SeatClass.BUSINESS,
+                Flight.SeatClass.ECONOMY, Flight.SeatClass.ECONOMY};
+        final Flight.SeatClass[] seatPreferences4 = new Flight.SeatClass[]{Flight.SeatClass.ECONOMY,
+                Flight.SeatClass.ECONOMY, Flight.SeatClass.ECONOMY};
+        final Flight.SeatClass[] seatPreferences5 = new Flight.SeatClass[]{Flight.SeatClass.BUSINESS,
+                Flight.SeatClass.BUSINESS, Flight.SeatClass.BUSINESS};
 
-    public static void main(String[] args) {
-        // TODO: Initialize test data to description
+        Map<String, Flight.SeatClass[]> offices = new HashMap<String, Flight.SeatClass[]>() {{
+            put("TO1", seatPreferences1);
+            put("TO2", seatPreferences2);
+            put("TO3", seatPreferences3);
+            put("TO4", seatPreferences4);
+            put("TO5", seatPreferences5);
+            
+        }};
+
+        Flight flight = new Flight("TRI123", 1, 1, 1);
+        BookingClient bookingClient = new BookingClient(offices, flight);
+
+        bookingClient.joinAllThreads(bookingClient.simulate());
+
+    }
+    private static void joinAllThreads(List<Thread> threads)
+            throws InterruptedException {
+        for (Thread t : threads) {
+            t.join();
+        }
+    }
+    class Operate implements Runnable{
+
+
+        private Flight.SeatClass[] preferences;
+        private String office;
+
+        public Operate(String office, Flight.SeatClass[] preferences){
+            this.preferences = preferences;
+            this.office = office;
+
+        }
+
+
+        @Override
+        public void run() {
+            Flight.Seat seat;
+            for(Flight.SeatClass seatType: preferences){
+                seat = flight.getNextAvailableSeat(seatType);
+                customerID++;
+                flight.printTicket(office, seat, customerID);
+            }
+
+        }
     }
 }
