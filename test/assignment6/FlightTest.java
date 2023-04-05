@@ -25,7 +25,7 @@ public class FlightTest {
     }
 
     @Test
-    public void printTicket() {
+    public void printTicket() throws InterruptedException {
         Flight flight = new Flight("ABC", 2,3,7);
         Flight.Seat seat = new Flight.Seat(Flight.SeatClass.FIRST, 2, Flight.SeatLetter.A);
         flight.printTicket("ABC", seat, 3);
